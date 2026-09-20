@@ -8,6 +8,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_markdown_latex/flutter_markdown_latex.dart';
 import 'package:markdown/markdown.dart' as md;
 
+const defaultIntervalSeconds = 60;
 // ==========================================
 // MODELOS DE DADOS
 // ==========================================
@@ -401,7 +402,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _intervalController = TextEditingController(
-    text: '3',
+    text: '$defaultIntervalSeconds',
   );
 
   List<Pergunta>? _perguntas;
@@ -416,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int get _intervalSeconds {
     final val = int.tryParse(_intervalController.text.trim());
-    return (val != null && val > 0) ? val : 3;
+    return (val != null && val > 0) ? val : defaultIntervalSeconds;
   }
 
   Future<void> _pickAndParseFile() async {
@@ -458,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
             content: Text(
               'Arquivo "${file.name}" carregado com sucesso (${parsed.length} perguntas)!',
             ),
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
       }
@@ -489,7 +490,11 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.error_outline, color: Colors.red, size: 40),
+        icon: Icon(
+          Icons.error_outline,
+          color: Theme.of(context).colorScheme.error,
+          size: 40,
+        ),
         title: Text(title),
         content: SelectableText(message, style: const TextStyle(fontSize: 15)),
         actions: [
@@ -553,20 +558,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.1),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .tertiaryContainer,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.green.shade300),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.check_circle, color: Colors.green),
+                            Icon(
+                              Icons.check_circle,
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 '$_loadedFileName (${_perguntas!.length} questões)',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onTertiaryContainer,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -711,17 +725,26 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
 
   void _showThemePicker() {
     final settings = AppSettings.of(context);
-    const colors = [
-      Colors.red,
+    var colors = [
       Colors.pink,
+      Colors.red.shade800,
+      Colors.red.shade500,
+      Colors.red.shade300,
       Colors.deepPurple,
+      Colors.purple.shade300,
+      Colors.purple.shade600,
       Colors.indigo,
+      Colors.lightBlueAccent,
       Colors.blue,
       Colors.teal,
+      Colors.tealAccent,
       Colors.green,
+      Colors.amberAccent,
       Colors.lime,
       Colors.orange,
+      Colors.deepOrange,
       Colors.brown,
+      Colors.brown.shade300,
     ];
 
     showModalBottomSheet<void>(
@@ -823,7 +846,11 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
+        icon: Icon(
+          Icons.check_circle,
+          color: Theme.of(context).colorScheme.tertiary,
+          size: 48,
+        ),
         title: const Text('Fim das Questões!'),
         content: const Text('Todas as perguntas foram apresentadas.'),
         actions: [
@@ -886,14 +913,16 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
             LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: Colors.grey.shade300,
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest,
               color: progress < 0.25
-                  ? Colors.red
+                  ? Theme.of(context).colorScheme.error
                   : Theme.of(context).primaryColor,
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(10.0),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1080),
@@ -1016,7 +1045,7 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
                         Card(
                           elevation: 2,
                           child: Padding(
-                            padding: const EdgeInsets.all(20.0),
+                            padding: const EdgeInsets.all(10.0),
                             child: MarkdownLatexText(
                               text: '${current.number}\\. ${current.question}',
                               baseTextStyle: TextStyle(
@@ -1035,7 +1064,7 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
                             return Card(
                               margin: const EdgeInsets.only(bottom: 12.0),
                               child: Padding(
-                                padding: const EdgeInsets.all(16.0),
+                                padding: const EdgeInsets.all(10.0),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
