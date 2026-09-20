@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,7 @@ class Pergunta {
     this.value,
     this.duration,
     this.hasSpecifiedDuration = false,
+    this.correctAnswerIndex = -1,
   });
 
   String? question;
@@ -36,6 +38,15 @@ class Pergunta {
   double? value;
   int? duration;
   bool hasSpecifiedDuration;
+  int correctAnswerIndex = -1;
+  String get correctAnswerLetter {
+    if (correctAnswerIndex >= 0 &&
+        optionList != null &&
+        correctAnswerIndex < optionList!.length) {
+      return optionList![correctAnswerIndex].letter;
+    }
+    return '';
+  }
 }
 
 // ==========================================
@@ -57,7 +68,7 @@ class PerguntaParser {
   /// Perguntas ::= Pergunta { Pergunta }
   /// Pergunta  ::= \p [ "(" Num [, NumSeg] ")" ] Texto Alts
   /// Alts      ::= Alt { NovaLinha Alt }
-  /// Alt       ::= \i Texto
+  /// Alt       ::= [ * ] \i Texto
   static List<Pergunta> parse(String content, int defaultDuration) {
     content = content.replaceAll(RegExp(r'/\*[\s\S]*?\*/'), '');
 
@@ -209,6 +220,8 @@ class PerguntaParser {
       final List<QuestionOption> options = [];
       int optionIndex = 0;
 
+      var correctAnswerIndex = -1;
+
       while (i < totalLines) {
         final currentLine = rawLines[i];
         final trimmed = currentLine.trim();
@@ -217,6 +230,7 @@ class PerguntaParser {
           break; // Início da próxima pergunta
         }
 
+        bool isCorrectAnswer = trimmed.startsWith('*');
         final optionMatch = RegExp(r'^\*?\s*\\i').matchAsPrefix(trimmed);
         if (optionMatch != null) {
           final optLineNum = i + 1;
@@ -249,6 +263,10 @@ class PerguntaParser {
             );
           }
 
+          if (isCorrectAnswer) {
+            correctAnswerIndex = optionIndex;
+          }
+
           final letter = String.fromCharCode('a'.codeUnitAt(0) + optionIndex);
           options.add(QuestionOption(letter: letter, option: optText));
           optionIndex++;
@@ -277,6 +295,7 @@ class PerguntaParser {
           value: value,
           duration: duration,
           hasSpecifiedDuration: hasSpecifiedDuration,
+          correctAnswerIndex: correctAnswerIndex,
         ),
       );
     }
@@ -420,6 +439,31 @@ class _HomeScreenState extends State<HomeScreen> {
     return (val != null && val > 0) ? val : defaultIntervalSeconds;
   }
 
+  // Escreve 'filename-respostas.txt' ao lado do arquivo original, com a letra correta de cada questão
+  Future<void> _writeAnswersFile(
+    PlatformFile file,
+    List<Pergunta> parsed,
+  ) async {
+    final originalPath = file.path;
+    if (originalPath == null) return;
+
+    final directory = originalPath.substring(
+      0,
+      originalPath.length - file.name.length,
+    );
+    final baseName = file.name.toLowerCase().endsWith('.txt')
+        ? file.name.substring(0, file.name.length - 4)
+        : file.name;
+    final answersPath = '$directory$baseName-respostas.txt';
+
+    final buffer = StringBuffer();
+    for (final pergunta in parsed) {
+      buffer.writeln('${pergunta.number}. ${pergunta.correctAnswerLetter}');
+    }
+
+    await File(answersPath).writeAsString(buffer.toString(), encoding: utf8);
+  }
+
   Future<void> _pickAndParseFile() async {
     setState(() => _isLoading = true);
 
@@ -447,6 +491,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Executa a análise sintática
       final parsed = PerguntaParser.parse(content, _intervalSeconds);
+
+      await _writeAnswersFile(file, parsed);
 
       setState(() {
         _perguntas = parsed;
@@ -597,7 +643,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         labelText: 'Intervalo (segundos)',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.timer_outlined),
-                        helperText: 'Padrão caso a questão não defina NumSeg',
+                        // helperText: 'Padrão caso a questão não defina NumSeg',
                       ),
                     ),
                     const SizedBox(height: 32),
