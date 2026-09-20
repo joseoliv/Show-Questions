@@ -21,7 +21,8 @@ class QuestionOption {
 
 class Pergunta {
   Pergunta({
-    this.question,
+    this.question = '',
+    this.number = 0,
     this.optionList,
     this.value,
     this.duration,
@@ -29,6 +30,7 @@ class Pergunta {
   });
 
   String? question;
+  int number = 0;
   List<QuestionOption>? optionList;
   double? value;
   int? duration;
@@ -56,6 +58,8 @@ class PerguntaParser {
   /// Alts      ::= Alt { NovaLinha Alt }
   /// Alt       ::= \i Texto
   static List<Pergunta> parse(String content, int defaultDuration) {
+    content = content.replaceAll(RegExp(r'/\*[\s\S]*?\*/'), '');
+
     if (content.trim().isEmpty) {
       throw ParseException(1, 'O arquivo selecionado está vazio.');
     }
@@ -267,6 +271,7 @@ class PerguntaParser {
       perguntas.add(
         Pergunta(
           question: questionText,
+          number: perguntas.length + 1,
           optionList: options,
           value: value,
           duration: duration,
@@ -295,8 +300,33 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  double _fontScale = 1.0;
+  double _fontScale = 1.3;
   Color _seedColor = Colors.indigo;
+
+  TextStyle? scaleTextStyle(TextStyle? style) {
+    if (style == null) return null;
+    return style.copyWith(fontSize: (style.fontSize ?? 14) * _fontScale);
+  }
+
+  TextTheme scaleTextTheme(TextTheme textTheme) {
+    return TextTheme(
+      displayLarge: scaleTextStyle(textTheme.displayLarge),
+      displayMedium: scaleTextStyle(textTheme.displayMedium),
+      displaySmall: scaleTextStyle(textTheme.displaySmall),
+      headlineLarge: scaleTextStyle(textTheme.headlineLarge),
+      headlineMedium: scaleTextStyle(textTheme.headlineMedium),
+      headlineSmall: scaleTextStyle(textTheme.headlineSmall),
+      titleLarge: scaleTextStyle(textTheme.titleLarge),
+      titleMedium: scaleTextStyle(textTheme.titleMedium),
+      titleSmall: scaleTextStyle(textTheme.titleSmall),
+      bodyLarge: scaleTextStyle(textTheme.bodyLarge),
+      bodyMedium: scaleTextStyle(textTheme.bodyMedium),
+      bodySmall: scaleTextStyle(textTheme.bodySmall),
+      labelLarge: scaleTextStyle(textTheme.labelLarge),
+      labelMedium: scaleTextStyle(textTheme.labelMedium),
+      labelSmall: scaleTextStyle(textTheme.labelSmall),
+    );
+  }
 
   void _setFontScale(double fontScale) {
     setState(() => _fontScale = fontScale);
@@ -325,7 +355,7 @@ class _MyAppState extends State<MyApp> {
         title: 'Apresentador de Perguntas',
         debugShowCheckedModeBanner: false,
         theme: baseTheme.copyWith(
-          textTheme: baseTheme.textTheme.apply(fontSizeFactor: _fontScale),
+          textTheme: scaleTextTheme(baseTheme.textTheme),
         ),
         home: const HomeScreen(),
       ),
@@ -498,7 +528,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
+            constraints: const BoxConstraints(maxWidth: 800),
             child: Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
@@ -655,10 +685,10 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
           children: [
             const ListTile(title: Text('Tamanho da fonte')),
             for (final option in const [
-              (label: 'Pequena', value: 0.85),
-              (label: 'Normal', value: 1.0),
-              (label: 'Grande', value: 1.2),
-              (label: 'Muito grande', value: 1.4),
+              (label: 'Pequena', value: 1.0),
+              (label: 'Normal', value: 1.2),
+              (label: 'Grande', value: 1.4),
+              (label: 'Muito grande', value: 1.8),
             ])
               RadioGroup<double>(
                 groupValue: settings.fontScale,
@@ -833,10 +863,12 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
             return KeyEventResult.handled;
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            _isPaused = true;
             _goToPreviousQuestion();
             return KeyEventResult.handled;
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            _isPaused = true;
             _advanceQuestion();
             return KeyEventResult.handled;
           }
@@ -864,14 +896,15 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
                 padding: const EdgeInsets.all(20.0),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 800),
+                    constraints: const BoxConstraints(maxWidth: 1080),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // Card de Cabeçalho com Valor e Tempo
                         Card(
                           color: _isPaused
-                              ? Colors.amber.withValues(alpha: 0.15)
+                              ? Theme.of(context).colorScheme.secondaryContainer
+                                    .withValues(alpha: 0.35)
                               : Theme.of(context)
                                     .colorScheme
                                     .surfaceContainerHighest,
@@ -985,7 +1018,7 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(20.0),
                             child: MarkdownLatexText(
-                              text: current.question ?? '',
+                              text: '${current.number}\\. ${current.question}',
                               baseTextStyle: TextStyle(
                                 fontSize: 18 * settings.fontScale,
                                 fontWeight: FontWeight.w600,
@@ -1026,7 +1059,7 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
                                       child: MarkdownLatexText(
                                         text: opt.option,
                                         baseTextStyle: TextStyle(
-                                          fontSize: 16 * settings.fontScale,
+                                          fontSize: 20 * settings.fontScale,
                                           height: 1.3,
                                         ),
                                       ),
