@@ -10,6 +10,7 @@ import 'package:flutter_markdown_latex/flutter_markdown_latex.dart';
 import 'package:markdown/markdown.dart' as md;
 
 const defaultIntervalSeconds = 60;
+var duracaoTotalQuestionario = 0;
 // ==========================================
 // MODELOS DE DADOS
 // ==========================================
@@ -70,6 +71,8 @@ class PerguntaParser {
   /// Alts      ::= Alt { NovaLinha Alt }
   /// Alt       ::= [ * ] \i Texto
   static List<Pergunta> parse(String content, int defaultDuration) {
+    duracaoTotalQuestionario = 0;
+
     content = content.replaceAll(RegExp(r'/\*[\s\S]*?\*/'), '');
 
     if (content.trim().isEmpty) {
@@ -286,18 +289,17 @@ class PerguntaParser {
           'A pergunta deve ter pelo menos uma alternativa iniciada com "\\i".',
         );
       }
-
-      perguntas.add(
-        Pergunta(
-          question: questionText,
-          number: perguntas.length + 1,
-          optionList: options,
-          value: value,
-          duration: duration,
-          hasSpecifiedDuration: hasSpecifiedDuration,
-          correctAnswerIndex: correctAnswerIndex,
-        ),
+      var novaPergunta = Pergunta(
+        question: questionText,
+        number: perguntas.length + 1,
+        optionList: options,
+        value: value,
+        duration: duration,
+        hasSpecifiedDuration: hasSpecifiedDuration,
+        correctAnswerIndex: correctAnswerIndex,
       );
+      duracaoTotalQuestionario += duration;
+      perguntas.add(novaPergunta);
     }
 
     return perguntas;
@@ -950,8 +952,14 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            'Questão ${_currentIndex + 1} de ${widget.perguntas.length}',
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Questão ${_currentIndex + 1} de ${widget.perguntas.length}',
+              ),
+              Text('Tempo total: ${_formatSeconds(duracaoTotalQuestionario)}'),
+            ],
           ),
         ),
         body: Column(
