@@ -166,6 +166,8 @@ class PerguntaParser {
           }
           duration = parsedDur;
           hasSpecifiedDuration = true;
+        } else {
+          duration = defaultDuration;
         }
       } else {
         questionFirstLine = afterP;
@@ -270,7 +272,7 @@ class PerguntaParser {
             correctAnswerIndex = optionIndex;
           }
 
-          final letter = String.fromCharCode('a'.codeUnitAt(0) + optionIndex);
+          final letter = String.fromCharCode('A'.codeUnitAt(0) + optionIndex);
           options.add(QuestionOption(letter: letter, option: optText));
           optionIndex++;
         } else if (trimmed.isEmpty) {
@@ -323,7 +325,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   double _fontScale = 1.3;
-  Color _seedColor = Colors.indigo;
+  Color _seedColor = Colors.purple;
 
   TextStyle? scaleTextStyle(TextStyle? style) {
     if (style == null) return null;
@@ -979,7 +981,7 @@ class _QuestionPlayerScreenState extends State<QuestionPlayerScreen> {
                 padding: const EdgeInsets.all(10.0),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1080),
+                    constraints: const BoxConstraints(maxWidth: 1920),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
